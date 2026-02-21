@@ -15,12 +15,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IAdmin, AdminService>();
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
 app.UseRouting();
 app.UseCors("AllowAll");
 app.MapControllers();
+
+app.MapHub<DroneHubService>("/droneHub");
 
 app.MapGet("/", () => "Система управленя дронами");
 
