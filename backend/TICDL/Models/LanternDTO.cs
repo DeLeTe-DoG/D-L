@@ -4,7 +4,8 @@ namespace backend.Models;
 
 public class LanternDTO
 {
-  public int Id { get; set; }
-  public List<CoordinatesDTO> Coordinates { get; set; } = [];
+  public string Id { get; set; } = string.Empty;
+  public string LanterName { get; set; } = string.Empty; 
+  public CoordinatesDTO Coordinates { get; set; }
   public string Status { get; set; } = String.Empty; 
 }

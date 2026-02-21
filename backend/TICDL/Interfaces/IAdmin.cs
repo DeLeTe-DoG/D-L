@@ -4,9 +4,11 @@ namespace backend.Interfaces;
 
 public interface IAdmin
 {
-  List<LanternDTO> GetAll();
-  LanternDTO Add(CoordinatesDTO coords, string status);
-  LanternDTO Edit(CoordinatesDTO coords, string status);
-  LanternDTO Delete();
-
+  List<LanternDTO> GetAllLanterns();
+  List<DroneDTO> GetAllDrones();
+  DroneDTO AddDrone(string ID, string Name);
+  LanternDTO AddLantern(CoordinatesDTO coords, string Name);
+  LanternDTO EditLantern(LanternDTO lantern, LanternDTO NewData);
+  LanternDTO DeleteLantern(string Id);
+  DroneDTO DeleteDrone(string Id);
 }
