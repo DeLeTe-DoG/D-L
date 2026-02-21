@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TICDL")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4048b6c6edc1835298abd832d056383c5d2f6564")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2c0873722a8ede182abd5369b1271c2f846b86b6")]
 [assembly: System.Reflection.AssemblyProductAttribute("TICDL")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TICDL")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

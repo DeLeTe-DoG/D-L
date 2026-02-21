@@ -8,22 +8,19 @@ public class AdminService : IAdmin
     private readonly List<LanternDTO> _lanterns = new();
     private readonly List<DroneDTO> _drones = new();
 
-    // Оптимизировал рандомайзер, используя Random.Shared (как обсуждали ранее)
     private string GenLine()
     {
-        var chars = "!@#$%^&*()_+";
+        var chars = "qwertyuioopasdfghjklzxcvbnm";
         int cnt = 5;
         char[] result = new char[cnt];
         
         for (int i = 0; i < cnt; i++)
         {
-            // Используем chars.Length (без +1, иначе будет ошибка выхода за пределы)
             result[i] = chars[Random.Shared.Next(0, chars.Length)];
         }
         return new string(result);
     }
 
-    // Исправлено: возвращает DroneDTO
     public DroneDTO AddDrone(string ID, string Name)
     {
         var drone = new DroneDTO
@@ -41,7 +38,7 @@ public class AdminService : IAdmin
     {
         var lantern = new LanternDTO
         {
-            LanterName = Name,
+            LanternName = Name,
             Coordinates = coords,
             Id = "LNTR_" + GenLine()
         };
@@ -49,19 +46,18 @@ public class AdminService : IAdmin
         return lantern;
     }
     
-    public LanternDTO EditLantern(LanternDTO oldLantern, LanternDTO NewData)
+    public LanternDTO EditLantern(string id, LanternDTO NewData)
     {
-        var lantern = _lanterns.FirstOrDefault(l => l.Id == oldLantern.Id);
+        var lantern = _lanterns.FirstOrDefault(l => l.Id == id);
         if (lantern != null)
         {
             lantern.Coordinates = NewData.Coordinates;
-            lantern.LanterName = NewData.LanterName;
+            lantern.LanternName = NewData.LanternName;
             return lantern;
         }
-        return null; // Или выбросить исключение
+        return null;
     }
 
-    // Исправлено: возвращает LanternDTO
     public LanternDTO DeleteLantern(string Id)
     {
         var lantern = _lanterns.FirstOrDefault(l => l.Id == Id);
@@ -72,7 +68,6 @@ public class AdminService : IAdmin
         return lantern;
     }
 
-    // Исправлено: возвращает DroneDTO (а не string)
     public DroneDTO DeleteDrone(string Id)
     {
         var drone = _drones.FirstOrDefault(d => d.DroneID == Id);
