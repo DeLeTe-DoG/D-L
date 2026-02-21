@@ -17,6 +17,11 @@ builder.Services.AddSingleton<IAdmin, AdminService>();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5003);
+});
+
 var app = builder.Build();
 
 app.UseRouting();
