@@ -29,7 +29,7 @@ public class AdminController : ControllerBase
       return BadRequest("Имя дрона и ID обязательны!");
     }
     _AdminService.AddDrone(drone.DroneID, drone.DroneName);
-    return Ok("Дрон " + drone + " добавлен");
+    return Ok("Дрон " + drone.DroneName + " добавлен");
   }
   [HttpDelete("drones/{id}")]
   public IActionResult DeleteDrone(string id)
@@ -42,7 +42,6 @@ public class AdminController : ControllerBase
     return Ok("Дрон " + id + " удалён");
   }
 
-  
   [HttpGet("lanterns")]
   public IActionResult GetAllLanterns()
   {
