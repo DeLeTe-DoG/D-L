@@ -19,7 +19,7 @@ namespace backend.Service
 
             if (!string.IsNullOrEmpty(droneId))
             {
-                _adminService.AddDrone(droneId, "Drone_" + droneId);
+                _adminService.AddDrone("Drone_" + droneId);
                 
                 await Clients.All.SendAsync("ReceiveAction", $"Система: Дрон {droneId} подключен к сети.");
                 

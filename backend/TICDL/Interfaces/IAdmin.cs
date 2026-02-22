@@ -6,7 +6,7 @@ public interface IAdmin
 {
   List<LanternDTO> GetAllLanterns();
   List<DroneDTO> GetAllDrones();
-  DroneDTO AddDrone(string ID, string Name);
+  DroneDTO AddDrone(string Name);
   LanternDTO AddLantern(CoordinatesDTO coords, string Name);
   LanternDTO EditLantern(string id, LanternDTO NewData);
   LanternDTO DeleteLantern(string Id);

@@ -96,14 +96,10 @@ public class AdminController : ControllerBase
   [HttpPost("drones")]
   public IActionResult AddDrone([FromBody] DroneDTO drone)
   {
-    string id = drone.DroneID;
-    List<DroneDTO> drones = _AdminService.GetAllDrones();
-    if (drones.FirstOrDefault(d => d.DroneID == id) == null)
+    if (drone.DroneName != null)
     {
-      _AdminService.AddDrone(drone.DroneID, drone.DroneName);
-      Console.WriteLine("[SIGNALR: Подключен и сохранён дрон: ]" + id);
+      _AdminService.AddDrone(drone.DroneName);
     }
-    Console.WriteLine("[SIGNALR] Дрон подключен" + id);
     return Ok("Дрон " + drone.DroneName + " добавлен");
   }
 

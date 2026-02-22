@@ -57,15 +57,16 @@ public class AdminService : IAdmin
         }
         return new string(result);
     }
-    public DroneDTO AddDrone(string ID, string Name)
+    public DroneDTO AddDrone(string Name)
     {
         var drone = new DroneDTO
         {
-            DroneID = ID,
+            DroneID = "DRN_" + GenLine(),
             DroneName = Name
         };
 
         _drones.Add(drone);
+        Console.WriteLine($"[СЕРВЕР] Дрон добавлен: {drone.DroneName} ({drone.DroneID})");
         return drone;
     }
     public LanternDTO AddLantern(CoordinatesDTO coords, string Name)
@@ -77,6 +78,7 @@ public class AdminService : IAdmin
             Id = "LNTR_" + GenLine()
         };
         _lanterns.Add(lantern);
+        Console.WriteLine($"[СЕРВЕР] Фонарь добавлен: {lantern.LanternName} ({lantern.Id})");
         return lantern;
     }
     public LanternDTO EditLantern(string id, LanternDTO NewData)
@@ -97,6 +99,7 @@ public class AdminService : IAdmin
         if (lantern != null)
         {
             _lanterns.Remove(lantern);
+            Console.WriteLine($"[СЕРВЕР] Фонарь  {lantern.LanternName} ({lantern.Id}) удалён");
         }
         return lantern;
     }
@@ -107,10 +110,18 @@ public class AdminService : IAdmin
         if (drone != null)
         {
             _drones.Remove(drone);
+            Console.WriteLine($"[СЕРВЕР] Дрон {drone.DroneName} ({drone.DroneID}) удалён");
         }
         return drone;
     }
 
     public List<LanternDTO> GetAllLanterns() => _lanterns;
-    public List<DroneDTO> GetAllDrones() => _drones;
+    public List<DroneDTO> GetAllDrones() { 
+        Console.WriteLine("[СЕРВЕР] Вывод списка дронов: ");
+        foreach (var drone in _drones)
+        {
+            Console.WriteLine($"-------- {drone.DroneName} ({drone.DroneID}), {drone.Battery}, {drone.DroneStatus}.");
+        }
+        return _drones;
+    }
 }
