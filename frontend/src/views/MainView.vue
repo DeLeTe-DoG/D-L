@@ -1,5 +1,5 @@
 <template>
-    <button @click="sendExample()">send</button>
+    <!-- <button @click="sendExample()">send</button> -->
     <div class="page-row">
         <h2 class="page-topic">Информация</h2>
         <button class="add-btn" @click="$refs.addModal.openModal()">
