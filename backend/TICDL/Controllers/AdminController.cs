@@ -158,6 +158,7 @@ public class AdminController : ControllerBase
       var TaskTree = BuildTreeFromCoordinates(allLaneterns);
 
       await _DroneHubService.Clients.All.SendAsync("RecieveMission", TaskTree);
+      Console.WriteLine($"[HUB] Неисправен фонарь {newL.Id}");
     }
     return Ok(newL);  
   }
