@@ -13,14 +13,14 @@ export default createStore({
     actions: {
         getLanterns({ commit }, data) {
             return axios
-                .get("https://d-l.onrender.com/api/lanterns")
+                .get("http://192.168.4.2:5003/api/lanterns")
                 .then((response) => {
                     console.log(response);
                     commit("setLanterns", response.data);
                 });
         },
         addItem({ commit, dispatch }, data) {
-            axios.post(`https://d-l.onrender.com/api/lanterns/`, {
+            axios.post(`http://192.168.4.2:5003/api/lanterns/`, {
                 lanternName: data.lanternName,
                 coordinates: {
                     lat: data.coordinates.lat,
@@ -34,7 +34,7 @@ export default createStore({
             })
         },
         editItem({ commit, dispatch }, data) {
-            axios.patch(`https://d-l.onrender.com/api/lanterns/${data.id}`, {
+            axios.patch(`http://192.168.4.2:5003/api/lanterns/${data.id}`, {
                 id: data.id,
                 lanternName: data.lanternName,
                 coordinates: {
