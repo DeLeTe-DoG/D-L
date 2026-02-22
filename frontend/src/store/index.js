@@ -4,10 +4,15 @@ import axios from "axios";
 export default createStore({
     state: {
         lanterns: null,
+        drones: null,
     },
     mutations: {
         setLanterns(state, data) {
             state.lanterns = data;
+        },
+        setDrones(state, data) {
+            state.drones = data;
+            console.log(state.drones[0])
         },
     },
     actions: {
@@ -49,13 +54,34 @@ export default createStore({
                 window.location.reload()
             })
         },
-        deleteItem({ commit, dispatch }, id) {
-            axios.delete(`https://d-l.onrender.com/api/lanterns/${id}`)
-            .then(response => {
-                console.log(response)
-                dispatch('getLanterns')
-                window.location.reload()
-            })
+        deleteLantern({ commit, dispatch }, id) {
+            axios
+                .delete(`https://d-l.onrender.com/api/lanterns/${id}`)
+                .then((response) => {
+                    console.log(response);
+                    dispatch("getLanterns");
+                    window.location.reload();
+                });
+        },
+        addDrone({ commit, dispatch }, data) {
+            axios
+                .post(`https://d-l.onrender.com/api/drones/`, {
+                    DroneName: data.droneName,
+                })
+                .then((response) => {
+                    console.log(response);
+                    dispatch("getDrones");
+                    window.location.reload();
+                });
+        },
+        deleteDrone({ commit, dispatch }, id) {
+            axios
+                .delete(`https://d-l.onrender.com/api/drones/${id}`)
+                .then((response) => {
+                    console.log(response);
+                    dispatch("getDrones");
+                    window.location.reload();
+                });
         },
     },
 });
