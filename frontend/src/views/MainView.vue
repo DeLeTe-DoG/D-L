@@ -90,7 +90,7 @@
     <h2 class="page-topic map-topic">Метки на карте</h2>
     <div id="map"></div>
 
-    <AddModal ref="addModal" />
+    <AddModal ref="addModal" itemType="lantern" />
 </template>
 
 <script>
@@ -98,6 +98,7 @@ import axios from "axios";
 
 import AddModal from "@/components/AddModal.vue";
 import { mapActions, mapState } from "vuex";
+import squareIcon from '../assets/images/icons/base.svg'
 
 export default {
     components: { AddModal },
@@ -145,14 +146,20 @@ export default {
                     center: [55.796317, 49.106092],
                     zoom: 11,
                 });
-
-                // const placemark = new window.ymaps.Placemark(
-                //   [55.796317, 49.106092],
-                //   {
-                //     balloonContent: "Привет! Это Казань"
-                //   }
-                // );
-
+                const baseCenter = [55.796317, 49.106092];
+                const placemark = new ymaps.Placemark(
+                    [55.790846, 49.121748],
+                    {
+                        balloonContentHeader: 'Дронбаза № 1'
+                    },
+                    {
+                        iconLayout: "default#image",
+                        iconImageHref: squareIcon,
+                        iconImageSize: [30, 30],
+                        iconImageOffset: [-10, -10],
+                    },
+                );
+                map.geoObjects.add(placemark);
                 // const points = [
                 //     { coords: [55.790846, 49.121748], color: "#ff5834" }, //55.790846, 49.121748
                 //     { coords: [55.790607, 49.106988], color: "#12b981" },
@@ -166,7 +173,10 @@ export default {
                     const circle = new window.ymaps.Circle(
                         [point.coords, 200],
                         {
-                            balloonContent: "hello",
+                            balloonContentHeader: lant.lanternName,
+                            balloonContentBody: lant.status
+                                ? "Работает"
+                                : "Перегорела",
                         },
                         {
                             fillColor: "#fff",
@@ -194,7 +204,9 @@ export default {
         },
         sendExample() {
             axios
-                .get("http://192.168.4.2:5003/api/broadcast?data=VLAD_TI_AHUEL_CHTOLI")
+                .get(
+                    "http://192.168.4.2:5003/api/broadcast?data=VLAD_TI_AHUEL_CHTOLI",
+                )
                 .then((response) => {
                     console.log(response);
                 });

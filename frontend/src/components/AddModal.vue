@@ -30,7 +30,7 @@
                     </svg>
                 </button>
             </div>
-            <div class="switcher" v-if="modalType == 'add'">
+            <!-- <div class="switcher" v-if="modalType == 'add'">
                 <button
                     v-for="item in itemTypes"
                     class="switcher-btn"
@@ -39,7 +39,7 @@
                 >
                     {{ item.value }}
                 </button>
-            </div>
+            </div> -->
             <form class="modal-form">
                 <!-- имя и коорды -->
                 <div class="input-group" v-if="modalType != 'delete'">
@@ -62,24 +62,44 @@
                     <div class="coords-inputs">
                         <input
                             type="text"
-                            placeholder="Координата X"
+                            placeholder="Ширина"
                             v-model="itemCoords.lat"
                         />
                         <input
                             type="text"
-                            placeholder="Координата Y"
+                            placeholder="Долгота"
                             v-model="itemCoords.lng"
                         />
                     </div>
                 </div>
-                <div class="input-group" v-if="modalType != 'delete'">
+                <div class="input-group" v-if="modalType == 'edit'">
                     <label for="itemName"
                         >Статус
                         {{ itemType == "lantern" ? "Столба" : "Дрона" }}</label
                     >
-                    <select name="itemStatus" id="itemStatus" v-model="itemStatus" v-if="modalType == 'edit'">
+                    <select
+                        name="itemStatus"
+                        id="itemStatus"
+                        v-model="itemStatus"
+                    >
                         <option value="1">active</option>
                         <option value="0">inactive</option>
+                    </select>
+                </div>
+                <div
+                    class="input-group"
+                    v-if="modalType != 'delete' && itemType == 'drone'"
+                >
+                    <label for="itemName"
+                        >Номер базы привязки
+                        {{ itemType == "lantern" ? "Столба" : "Дрона" }}</label
+                    >
+                    <select
+                        name="itemStatus"
+                        id="itemStatus"
+                        v-model="itemStatus"
+                    >
+                        <option value="1">база 1</option>
                     </select>
                 </div>
                 <button
@@ -112,7 +132,7 @@ import { mapActions } from "vuex";
 export default {
     data() {
         return {
-            itemType: "lantern",
+            // itemType: "lantern",
             itemTypes: [
                 {
                     value: "Столб",
@@ -134,19 +154,28 @@ export default {
             itemStatus: 0,
         };
     },
+    props: {
+        itemType: {
+            type: String,
+            required: true,
+        },
+    },
     methods: {
         ...mapActions({
-            editItem: "editItem",
-            addItem: "addItem",
-            deleteItem: "deleteItem",
+            editLantern: "editLantern",
+            addLantern: "addLantern",
+            deleteLantern: "deleteLantern",
+            addDrone: "addDrone",
+            editDrone: "editDrone",
+            deleteDrone: "deleteDrone",
         }),
         openModal(data) {
             this.showModal = true;
             if (data) {
-                this.itemName = data[0].lanternName;
+                this.itemName = data[0].lanternName || data[0].droneName;
                 this.itemCoords = data[0].coordinates;
                 this.modalType = data[1];
-                this.itemId = data[0].id;
+                this.itemId = data[0].id || data[0].droneID;
             }
         },
         closeModal() {
@@ -154,28 +183,39 @@ export default {
             this.itemCoords = { lat: null, lng: null };
             this.modalType = "add";
             this.showModal = false;
-            this.itemType = 'lantern'
+            // this.itemType = null;
         },
         handleAdding() {
-            const sendData = {
-                coordinates: this.itemCoords,
-                lanternName: this.itemName,
-                status: this.itemStatus
-            };
-            this.addItem(sendData);
+            if (this.itemType == "lantern") {
+                const sendData = {
+                    coordinates: this.itemCoords,
+                    lanternName: this.itemName,
+                    status: this.itemStatus,
+                };
+                this.addLantern(sendData);
+            } else {
+                const sendData = {
+                    droneName: this.itemName,
+                };
+                this.addDrone(sendData);
+            }
         },
         handleEdit() {
             const sendData = {
                 id: this.itemId,
                 coordinates: this.itemCoords,
                 lanternName: this.itemName,
-                status: this.itemStatus
+                status: this.itemStatus,
             };
-            this.editItem(sendData);
+            this.editLantern(sendData);
         },
         handleDelete() {
             const sendId = this.itemId;
-            this.deleteItem(sendId);
+            if (this.itemType == "lantern") {
+                this.deleteLantern(sendId);
+            } else {
+                this.deleteDrone(sendId);
+            }
         },
     },
 };
@@ -240,7 +280,7 @@ export default {
         outline: none;
         border-radius: 15px;
     }
-    .confirm-par{
+    .confirm-par {
         color: var(--color-text-grey);
         margin-top: 20px;
     }
