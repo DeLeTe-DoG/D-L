@@ -12,6 +12,7 @@
     --color-yellow: #f2b202;
     --color-blue: #418cff;
     --color-border: #f5f5f5;
+    --color-bg: #fafafa;
 }
 @font-face {
     font-family: "Kumar";
@@ -67,4 +68,41 @@
 }
 .main{
     padding: 20px;
+    padding-top: 30px;
+    height: 100vh;
+    overflow-y: scroll;
+}
+.page-row{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.add-btn{
+    border: 1px solid var(--color-blue);
+    border-radius: 5px;
+    outline: none;
+    background: transparent;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.input-group{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    label{
+        font-size: 14px;
+        color: var(--color-text-grey);
+    }
+    input{
+        width: 100%;
+        height: 50px;
+        border: none;
+        outline: none;
+        border-radius: 15px;
+        padding: 0 10px;
+        background: var(--color-border);
+    }
 }
