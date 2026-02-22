@@ -130,11 +130,14 @@ public class AdminController : ControllerBase
     }
     _AdminService.EditLantern(id, newL);
 
-    var allLaneterns = _AdminService.GetAllLanterns();
-    var TaskTree = BuildTreeFromCoordinates(allLaneterns);
+    if (lantern.Status != newL.Status)
+    {
 
-    await _DroneHubService.Clients.All.SendAsync("RecieveMission", TaskTree);
+      var allLaneterns = _AdminService.GetAllLanterns();
+      var TaskTree = BuildTreeFromCoordinates(allLaneterns);
 
+      await _DroneHubService.Clients.All.SendAsync("RecieveMission", TaskTree);
+    }
     return Ok(newL);  
   }
 
