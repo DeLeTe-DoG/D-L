@@ -1,29 +1,52 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
+using backend.Interfaces;
+using Microsoft.AspNetCore.Cors;
 
-public class DroneHubService : Hub
+namespace backend.Service
 {
+    public class DroneHubService : Hub
+    {
+        private readonly IAdmin _adminService;
 
-  public async Task SendMission(object missionData)
-  {
-    var json = JsonSerializer.Serialize(missionData);
-    await Clients.All.SendAsync("RecieveTask", json);
-  }
-  
-  public override async Task OnConnectedAsync()
-  {
-      Console.WriteLine($"\n[SIGNALR] ===> НОВОЕ ПОДКЛЮЧЕНИЕ: {Context.ConnectionId}");
-      Console.WriteLine($"[SIGNALR] User: {Context.UserIdentifier}");
-      await base.OnConnectedAsync();
-  }
-  public override async Task OnDisconnectedAsync(Exception? exception)
-  {
-      Console.WriteLine($"\n[SIGNALR] <=== ОТКЛЮЧЕНИЕ: {Context.ConnectionId}");
-      if (exception != null)
-      {
-          Console.WriteLine($"[SIGNALR] ПРИЧИНА: {exception.Message}");
-      }
-      await base.OnDisconnectedAsync(exception);
+        public DroneHubService(IAdmin adminService)
+        {
+            _adminService = adminService;
+        }
+        public override async Task OnConnectedAsync()
+        {
+            var httpContext = Context.GetHttpContext();
+            var droneId = httpContext?.Request.Query["droneId"].ToString();
+
+            if (!string.IsNullOrEmpty(droneId))
+            {
+                _adminService.AddDrone(droneId, "Drone_" + droneId);
+                
+                await Clients.All.SendAsync("ReceiveAction", $"Система: Дрон {droneId} подключен к сети.");
+                
+                Console.WriteLine($"[Hub] Подключено устройство: {droneId}");
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public async Task SendTelemetry(string droneId, string data)
+        {
+            await Clients.All.SendAsync("ReceiveTelemetry", droneId, data);
+            
+            Console.WriteLine($"[Telemetry] От {droneId}: {data}");
+        }
+
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            Console.WriteLine($"[Hub] Устройство отключено: {Context.ConnectionId}");
+            await base.OnDisconnectedAsync(exception);
+        }
+
+    public async Task SendComandToDrone(string droneId, string command)
+    {
+      await Clients.All.SendAsync("RecieveCommand", command);
+      Console.WriteLine($"[HUB] Команда {command} отправлена на дрон {droneId}");
+    }
   }
 }
-

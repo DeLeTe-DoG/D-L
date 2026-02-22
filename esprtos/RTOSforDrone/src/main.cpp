@@ -107,59 +107,70 @@
 #include <WiFi.h>
 #include <WebSocketsClient.h>
 
+// --- НАСТРОЙКИ СЕТИ ---
+const char* ap_ssid     = "Drone_Network";
+const char* ap_password = "password123"; 
 
-const char* ssid = "MTSRouter_A773";
-const char* password = "57329512";
-const char* host = "192.168.1.162";
-const int port = 5003;
+// --- НАСТРОЙКИ BACKEND ---
+const char* server_host = "192.168.4.2"; 
+const int   server_port = 5003;
+const String droneID    = "DRN_843nkr9p";
 
 WebSocketsClient webSocket;
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     switch(type) {
         case WStype_DISCONNECTED:
-            Serial.println("[WS] Статус: Отключено от сервера");
+            Serial.println("[WS] Отключено от сервера");
             break;
-            
         case WStype_CONNECTED:
-            Serial.println("[WS] Статус: Подключено! Отправляю Handshake...");
-            // Обязательное сообщение для протокола SignalR (JSON + спецсимвол 0x1e)
+            Serial.println("[WS] Подключено к SignalR!");
+            // Хендшейк SignalR (JSON + 0x1e)
             webSocket.sendTXT("{\"protocol\":\"json\",\"version\":1}\x1e");
             break;
-
         case WStype_TEXT:
-            Serial.printf("[WS] Получены данные: %s\n", (char*)payload);
-            break;
+            Serial.printf("[WS] Получено от сервера: %s\n", (char*)payload);
 
-        case WStype_ERROR:
-            Serial.println("[WS] ОШИБКА соединения!");
-            break;
-
-        case WStype_PING:
-            Serial.println("[WS] Пинг...");
+            if (strstr((char*)payload, "LED_ON")) {
+                digitalWrite(2, HIGH);
+                Serial.println("Светодиод Включён");
+            } else if (strstr((char*)payload, "LED_OFF")) {
+                digitalWrite(2, LOW);
+                Serial.println("Светодиод Выключен");
+            }
             break;
     }
 }
 
 void setup() {
     Serial.begin(115200);
+    pinMode(2, OUTPUT);
     delay(1000);
 
+    // 1. Создаем точку доступа
+    WiFi.softAP(ap_ssid, ap_password);
+    
+    Serial.println("\n--- ТОЧКА ДОСТУПА ЗАПУЩЕНА ---");
+    Serial.print("SSID: "); Serial.println(ap_ssid);
+    Serial.print("IP ESP32: "); Serial.println(WiFi.softAPIP()); // 192.168.4.1
+    Serial.println("------------------------------");
 
-    WiFi.begin(ssid, password);
-    Serial.print("Подключение к WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("\n[WiFi] Подключено! IP ESP32: " + WiFi.localIP().toString());
-
-
-    webSocket.begin(host, port, "/droneHub");
+    webSocket.begin(server_host, server_port, "/droneHub?droneId=" + droneID);
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(5000);
 }
 
 void loop() {
     webSocket.loop();
+
+    // Каждые 10 секунд шлем тестовое сообщение, чтобы SignalR видел активность
+    static unsigned long lastMsg = 0;
+    if (millis() - lastMsg > 10000) {
+        lastMsg = millis();
+        if (webSocket.isConnected()) {
+            String msg = "{\"type\":1,\"target\":\"SendAction\",\"arguments\":[\"Heartbeat from ESP32\"]}\x1e";
+            webSocket.sendTXT(msg);
+            Serial.println("[WS] Сигнал жизни отправлен");
+        }
+    }
 }

@@ -11,6 +11,12 @@ public class AdminController : ControllerBase
   private readonly IAdmin _AdminService;
   private readonly IHubContext<DroneHubService> _DroneHubService;
 
+  public AdminController(IAdmin admin, IHubContext<DroneHubService> hub)
+  {
+    _AdminService = admin;
+    _DroneHubService = hub;
+  }
+
   private double GetDistance(double lat1, double lng1, double lat2, double lng2)
   {
       return Math.Sqrt(Math.Pow(lat1 - lat2, 2) + Math.Pow(lng1 - lng2, 2));
@@ -63,11 +69,7 @@ public class AdminController : ControllerBase
     return new {nodes = tree};
   }
 
-  public AdminController(IAdmin admin, IHubContext<DroneHubService> hub)
-  {
-    _AdminService = admin;
-    _DroneHubService = hub;
-  }
+
 
   [HttpGet("drones")]
   public IActionResult GetAllDrones()
@@ -75,17 +77,36 @@ public class AdminController : ControllerBase
     var drones = _AdminService.GetAllDrones();
     return Ok(drones);
   }
+  [HttpGet("broadcast")]
+  public async Task<IActionResult> Broadcast([FromQuery] string data)
+  {
+    if (string.IsNullOrEmpty(data))
+    {
+      BadRequest("Данных нет");
+    }
+
+    await _DroneHubService.Clients.All.SendAsync("RecieveCommand", data);
+    return Ok(new {
+      message = "Данные отправлены",
+      sentData = data,
+      timeStamp = DateTime.Now
+    });
+  }
 
   [HttpPost("drones")]
   public IActionResult AddDrone([FromBody] DroneDTO drone)
   {
-    if (string.IsNullOrWhiteSpace(drone.DroneName) || string.IsNullOrWhiteSpace(drone.DroneID))
+    string id = drone.DroneID;
+    List<DroneDTO> drones = _AdminService.GetAllDrones();
+    if (drones.FirstOrDefault(d => d.DroneID == id) == null)
     {
-      return BadRequest("Имя дрона и ID обязательны!");
+      _AdminService.AddDrone(drone.DroneID, drone.DroneName);
+      Console.WriteLine("[SIGNALR: Подключен и сохранён дрон: ]" + id);
     }
-    _AdminService.AddDrone(drone.DroneID, drone.DroneName);
+    Console.WriteLine("[SIGNALR] Дрон подключен" + id);
     return Ok("Дрон " + drone.DroneName + " добавлен");
   }
+
   [HttpDelete("drones/{id}")]
   public IActionResult DeleteDrone(string id)
   {
