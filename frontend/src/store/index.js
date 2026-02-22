@@ -41,6 +41,7 @@ export default createStore({
                     lat: data.coordinates.lat,
                     lng: data.coordinates.lng,
                 },
+                status: data.status,
             })
             .then(response => {
                 console.log(response)

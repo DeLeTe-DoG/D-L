@@ -1,4 +1,5 @@
 <template>
+    <button @click="sendExample()">send</button>
     <div class="page-row">
         <h2 class="page-topic">Информация</h2>
         <button class="add-btn" @click="$refs.addModal.openModal()">
@@ -17,7 +18,7 @@
                     <td>Статус</td>
                     <td>Дата</td>
                     <td>ID Дрона</td>
-                    <td>Время</td>
+                    <!-- <td>Время</td> -->
                     <td></td>
                 </tr>
             </thead>
@@ -36,7 +37,7 @@
                     </td>
                     <td>09/12/25</td>
                     <td>{{ lant.drone || "-" }}</td>
-                    <td>30:00</td>
+                    <!-- <td>30:00</td> -->
                     <td>
                         <div class="td-wrapper">
                             <button
@@ -109,6 +110,7 @@ export default {
                 coordorder: "latlong",
                 enterprise: false,
                 version: "2.1",
+                example: "",
             },
         };
     },
@@ -155,13 +157,14 @@ export default {
                 //     { coords: [55.790846, 49.121748], color: "#ff5834" }, //55.790846, 49.121748
                 //     { coords: [55.790607, 49.106988], color: "#12b981" },
                 // ];
+                const circles = [];
                 this.lanterns.forEach((lant) => {
                     const point = {
                         coords: [lant.coordinates.lat, lant.coordinates.lng],
-                        color: lant.status ? '#12b981' : '#ff5834'
+                        color: lant.status ? "#12b981" : "#ff5834",
                     };
                     const circle = new window.ymaps.Circle(
-                        [point.coords, 100],
+                        [point.coords, 200],
                         {
                             balloonContent: "hello",
                         },
@@ -172,8 +175,29 @@ export default {
                         },
                     );
                     map.geoObjects.add(circle);
+                    circles.push(circle);
+                });
+                map.events.add("boundschange", (e) => {
+                    if (e.get("newZoom") !== e.get("oldZoom")) {
+                        const zoom = e.get("newZoom");
+
+                        // формула изменения радиуса
+                        // const radius = Math.max(0.1, (100 / zoom) * 2);
+                        const radius = 5000 / Math.pow(2, zoom / 2);
+
+                        circles.forEach((circle) => {
+                            circle.geometry.setRadius(radius);
+                        });
+                    }
                 });
             });
+        },
+        sendExample() {
+            axios
+                .get("http://192.168.4.2:5003/api/broadcast?data=VLAD_TI_AHUEL_CHTOLI")
+                .then((response) => {
+                    console.log(response);
+                });
         },
     },
     mounted() {
@@ -196,7 +220,10 @@ export default {
 }
 .columns-journal {
     width: 100%;
-    color: var(--color-text-grey);
+
+    thead {
+        color: var(--color-text-grey);
+    }
     td {
         padding: 25px 0;
         border-bottom: 1px solid var(--color-border);

@@ -42,7 +42,7 @@
             </div>
             <form class="modal-form">
                 <!-- имя и коорды -->
-                <div class="input-group">
+                <div class="input-group" v-if="modalType != 'delete'">
                     <label for="itemName"
                         >Имя
                         {{ itemType == "lantern" ? "Столба" : "Дрона" }}</label
@@ -53,6 +53,7 @@
                         v-model="itemName"
                     />
                 </div>
+                <p v-else class="confirm-par">Подтвердите удаление</p>
                 <div
                     class="input-group"
                     v-if="itemType == 'lantern' && modalType != 'delete'"
@@ -71,10 +72,26 @@
                         />
                     </div>
                 </div>
+                <div class="input-group" v-if="modalType != 'delete'">
+                    <label for="itemName"
+                        >Статус
+                        {{ itemType == "lantern" ? "Столба" : "Дрона" }}</label
+                    >
+                    <select name="itemStatus" id="itemStatus" v-model="itemStatus" v-if="modalType == 'edit'">
+                        <option value="1">active</option>
+                        <option value="0">inactive</option>
+                    </select>
+                </div>
                 <button
                     type="button"
                     class="confirm"
-                    @click="modalType == 'edit' ? handleEdit() : modalType == 'add' ? handleAdding() : handleDelete()"
+                    @click="
+                        modalType == 'edit'
+                            ? handleEdit()
+                            : modalType == 'add'
+                              ? handleAdding()
+                              : handleDelete()
+                    "
                 >
                     {{
                         modalType == "add"
@@ -114,13 +131,14 @@ export default {
             itemName: "",
             itemId: null,
             modalType: "add",
+            itemStatus: 0,
         };
     },
     methods: {
         ...mapActions({
             editItem: "editItem",
-            addItem: 'addItem',
-            deleteItem: 'deleteItem',
+            addItem: "addItem",
+            deleteItem: "deleteItem",
         }),
         openModal(data) {
             this.showModal = true;
@@ -136,11 +154,13 @@ export default {
             this.itemCoords = { lat: null, lng: null };
             this.modalType = "add";
             this.showModal = false;
+            this.itemType = 'lantern'
         },
         handleAdding() {
             const sendData = {
                 coordinates: this.itemCoords,
                 lanternName: this.itemName,
+                status: this.itemStatus
             };
             this.addItem(sendData);
         },
@@ -149,13 +169,14 @@ export default {
                 id: this.itemId,
                 coordinates: this.itemCoords,
                 lanternName: this.itemName,
+                status: this.itemStatus
             };
             this.editItem(sendData);
         },
         handleDelete() {
-            const sendId = this.itemId
-            this.deleteItem();
-        }
+            const sendId = this.itemId;
+            this.deleteItem(sendId);
+        },
     },
 };
 </script>
@@ -218,6 +239,10 @@ export default {
         border: none;
         outline: none;
         border-radius: 15px;
+    }
+    .confirm-par{
+        color: var(--color-text-grey);
+        margin-top: 20px;
     }
     .close-btn {
         background: transparent;
