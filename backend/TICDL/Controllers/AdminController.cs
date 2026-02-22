@@ -17,58 +17,96 @@ public class AdminController : ControllerBase
     _DroneHubService = hub;
   }
 
-  private double GetDistance(double lat1, double lng1, double lat2, double lng2)
+  public class LanternNode
   {
-      return Math.Sqrt(Math.Pow(lat1 - lat2, 2) + Math.Pow(lng1 - lng2, 2));
-  }
+    public LanternDTO Lantern { get; set; }
+    public LanternNode? Left { get; set; }
+    public LanternNode? Right { get; set; }
 
-  private string FindClosestParentId(LanternDTO lantern, List<LanternDTO> allLanterns, double baseLat, double baseLng)
-  {
-    double distToBase = GetDistance(lantern.Coordinates.lat, lantern.Coordinates.lng, baseLat, baseLng);
-
-    if (distToBase < 0.0001) return "0"; 
-
-    string closestId = "0";
-    double minDistance = distToBase;
-
-    foreach (var lant in allLanterns)
+    public LanternNode(LanternDTO lantern)
     {
-        if (lant.Id == lantern.Id) continue;
-
-        double candidateDistToBase = GetDistance(lant.Coordinates.lat, lant.Coordinates.lng, baseLat, baseLng);
-
-        if (candidateDistToBase < distToBase)
-        {
-            double distBetween = GetDistance(lantern.Coordinates.lat, lantern.Coordinates.lng, 
-                                            lant.Coordinates.lat, lant.Coordinates.lng);
-            
-            if (distBetween < minDistance)
-            {
-                minDistance = distBetween;
-                closestId = lant.Id;
-            }
-        }
+        Lantern = lantern;
     }
-    return closestId;
   }
 
-  private object BuildTreeFromCoordinates(List<LanternDTO> lanterns)
+  public static LanternNode? BuildBinaryTree(
+    List<LanternDTO> lanterns,
+    double centerLat,
+    double centerLng)
   {
-    var baseLat = 0.0;
-    var baseLng = 0.0;
+    if (lanterns == null || lanterns.Count == 0)
+        return null;
 
-    var tree = lanterns.Select(l => new
+    LanternNode? root = null;
+
+    foreach (var lantern in lanterns)
     {
-      id = l.Id,
-      desc = l.LanternName,
-      status = l.Status,
-    
-      pId = FindClosestParentId(l, lanterns, baseLat, baseLng)
-    }).ToList();
+        root = Insert(root, lantern);
+    }
 
-    return new {nodes = tree};
+    return root;
+
+
+    LanternNode Insert(LanternNode? node, LanternDTO lantern)
+    {
+        if (node == null)
+            return new LanternNode(lantern);
+
+        var current = node;
+
+        double newDist = GetDistance(lantern);
+        double currentDist = GetDistance(current.Lantern);
+
+        if (newDist < currentDist)
+            current.Left = Insert(current.Left, lantern);
+        else
+            current.Right = Insert(current.Right, lantern);
+
+        return current;
+    }
+
+    double GetDistance(LanternDTO l)
+    {
+        double dx = l.Coordinates.lat - centerLat;
+        double dy = l.Coordinates.lng - centerLng;
+        return Math.Sqrt(dx * dx + dy * dy);
+    }
   }
 
+  public static List<List<LanternDTO>> GetRoutesToBroken(LanternNode? root)
+  {
+    var routes = new List<List<LanternDTO>>();
+
+    if (root == null)
+        return routes;
+
+    Traverse(root, new List<LanternDTO>());
+
+    return routes;
+
+
+    void Traverse(LanternNode? node, List<LanternDTO> currentPath)
+    {
+        if (node == null)
+            return;
+
+        // Добавляем текущий фонарь в путь
+        currentPath.Add(node.Lantern);
+
+        // Если фонарь сломан (Status == 0)
+        if (node.Lantern.Status == 0)
+        {
+            routes.Add(new List<LanternDTO>(currentPath));
+        }
+
+        // Рекурсивный обход
+        Traverse(node.Left, currentPath);
+        Traverse(node.Right, currentPath);
+
+        // Убираем текущий узел при возврате назад (backtracking)
+        currentPath.RemoveAt(currentPath.Count - 1);
+    }
+  }
 
 
   [HttpGet("drones")]
@@ -132,29 +170,31 @@ public class AdminController : ControllerBase
     return Ok("Фонарь " + dto.LanternName + " добавлен");
   }
 
+
   [HttpPatch("lanterns/{id}")]
   public async Task<IActionResult> EditLantern(string id, [FromBody] LanternDTO newL)
   {
     var lantern = _AdminService.GetAllLanterns().FirstOrDefault(l => l.Id == id);
     if (lantern == null) return NotFound();
-    if(!string.IsNullOrWhiteSpace(newL.LanternName))
-    {
-      lantern.LanternName = newL.LanternName;
-    }
-    if (!Double.IsNaN(newL.Coordinates.lat) & !Double.IsNaN(newL.Coordinates.lng))
-    {
-      lantern.Coordinates = newL.Coordinates;
-    }
+
     _AdminService.EditLantern(id, newL);
 
     if (lantern.Status != newL.Status)
     {
-
       var allLaneterns = _AdminService.GetAllLanterns();
-      var TaskTree = BuildTreeFromCoordinates(allLaneterns);
-
+      var TaskTree = GetRoutesToBroken(BuildBinaryTree(allLaneterns, 0.0, 0.0));
       await _DroneHubService.Clients.All.SendAsync("RecieveMission", TaskTree);
-      Console.WriteLine($"[HUB] Неисправен фонарь {newL.Id}");
+      Console.WriteLine($"[СЕРВЕР] Неисправен фонарь {newL.Id}");
+      Console.WriteLine($"[СЕРВЕР] аршруты до неисправленных фонарей");
+      foreach (var route in TaskTree)
+      {
+          Console.WriteLine("    Маршрут:");
+          foreach (var item in route)
+          {
+              Console.Write($"    {item.Id} -> ");
+          }
+          Console.WriteLine("END");
+      }
     }
     return Ok(newL);  
   }

@@ -11,14 +11,14 @@ public class AdminService : IAdmin
         // База (Дрон-станция) обычно находится в начале маршрута
         new LanternDTO { 
             Id = "L1", 
-            LanternName = "Входная группа (База)", 
+            LanternName = "Первый", 
             Status = 0, 
             Coordinates = new CoordinatesDTO { lat = 55.755800, lng = 49.123300} 
         },
         // Фонарь поблизости - всё в порядке
         new LanternDTO { 
             Id = "L2", 
-            LanternName = "Центральная аллея - 1", 
+            LanternName = "Второй", 
             Status = 0, 
             Coordinates = new CoordinatesDTO { lat = 55.756000, lng = 49.124000} 
         },

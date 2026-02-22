@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using backend.Interfaces;
 using Microsoft.AspNetCore.Cors;
+using backend.Models;
 
 namespace backend.Service
 {
@@ -29,13 +30,12 @@ namespace backend.Service
             await base.OnConnectedAsync();
         }
 
-        public async Task SendTelemetry(string droneId, string data)
-        {
-            await Clients.All.SendAsync("ReceiveTelemetry", droneId, data);
+        // public async Task SendTelemetry(string droneId, string data)
+        // {
+        //     await Clients.All.SendAsync("ReceiveTelemetry", droneId, data);
             
-            Console.WriteLine($"[Telemetry] От {droneId}: {data}");
-        }
-
+        //     Console.WriteLine($"[Telemetry] От {droneId}: {data}");
+        // }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
@@ -43,10 +43,16 @@ namespace backend.Service
             await base.OnDisconnectedAsync(exception);
         }
 
-    public async Task SendComandToDrone(string droneId, string command)
-    {
-      await Clients.All.SendAsync("RecieveCommand", command);
-      Console.WriteLine($"[HUB] Команда {command} отправлена на дрон {droneId}");
+        public async Task SendComandToDrone(string droneId, string command)
+        {
+            await Clients.All.SendAsync("RecieveCommand", command);
+            Console.WriteLine($"[HUB] Команда {command} отправлена на дрон {droneId}");
+        }
+
+        public async Task SendData(object data)
+        {
+            await Clients.All.SendAsync("RecieveTelemetry", data);
+            Console.WriteLine($"[HUB] Карта маршрута отправлена на дронхаб");
+        }
     }
-  }
 }
