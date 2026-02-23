@@ -30,9 +30,9 @@
                         <div class="td-wrapper">
                             <div
                                 class="indicator"
-                                :class="lant.status ? 'active' : 'inactive'"
+                                :class="!lant.status ? 'active' : 'inactive'"
                             ></div>
-                            {{ lant.status ? "Работает" : "Не работает" }}
+                            {{ !lant.status ? "Работает" : "Не работает" }}
                         </div>
                     </td>
                     <td>09/12/25</td>

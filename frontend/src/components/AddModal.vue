@@ -82,8 +82,8 @@
                         id="itemStatus"
                         v-model="itemStatus"
                     >
-                        <option value="1">active</option>
-                        <option value="0">inactive</option>
+                        <option value="0">active</option>
+                        <option value="1">inactive</option>
                     </select>
                 </div>
                 <div
