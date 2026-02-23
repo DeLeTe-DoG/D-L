@@ -22,7 +22,13 @@ namespace backend.Service
         public async Task CompleteMission()
         {
             _adminService.isDroneBusy = false; // СБРАСЫВАЕМ ФЛАГ
-            Console.WriteLine("[СЕРВЕР] Дрон сообщил о завершении. Флаг IsDroneBusy сброшен в false.");
+            Console.WriteLine($"[СЕРВЕР] Дрон {Context.GetHttpContext()?.Request.Query["droneId"].ToString()} завершил задание");
+        }
+
+        public async Task StartMission()
+        {
+            _adminService.isDroneBusy = true;
+            Console.WriteLine($"[СЕРВЕР] Дрон {Context.GetHttpContext()?.Request.Query["droneId"].ToString()} начал задание");
         }
 
         public DroneHubService(IAdmin adminService)

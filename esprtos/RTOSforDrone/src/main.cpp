@@ -52,7 +52,7 @@ void sendFixToServer(const char* lanternId) {
     if (webSocket.isConnected()) {
         String msg = "{\"type\":1,\"target\":\"FixLantern\",\"arguments\":[\"" + String(lanternId) + "\"]}\x1e";
         webSocket.sendTXT(msg);
-        Serial.printf("   [WS] Отчет об исправлении %s отправлен!\n", lanternId);
+        Serial.printf("    [WS] Отчет об исправлении %s отправлен!\n", lanternId);
     }
 }
 
@@ -60,10 +60,17 @@ void sendMissionComplete() {
     if (webSocket.isConnected()) {
         String msg = "{\"type\":1,\"target\":\"CompleteMission\",\"arguments\":[]}\x1e";
         webSocket.sendTXT(msg);
-        Serial.println("   [WS] Сигнал завершения миссии отправлен.");
+        Serial.println("    [WS] Сигнал завершения миссии отправлен.");
     }
 }
 
+void sendStartMission() {
+    if (webSocket.isConnected()) {
+        String msg = "{\"type\":1,\"target\":\"StartMission\",\"arguments\":[]}\x1e";
+        webSocket.sendTXT(msg);
+        Serial.println("    [WS] Сигнал старта миссии отправлен.");
+    }
+} 
 
 void processMission(JsonVariant args) {
     // В SignalR аргументы приходят в массиве. Наш список маршрутов - в args[0]
@@ -74,6 +81,7 @@ void processMission(JsonVariant args) {
         return;
     }
 
+    sendStartMission();
     int totalStages = allVersions.size();
     Serial.printf("\n=== ЗАПУСК МИССИИ: %d ЭТАПОВ ===\n", totalStages);
 

@@ -101,7 +101,7 @@ public class AdminService : IAdmin
         {
             lantern.Coordinates = NewData.Coordinates;
             lantern.LanternName = NewData.LanternName;
-            lantern.Id = NewData.Id;
+            lantern.Status = NewData.Status;
             return lantern;
         }
         return null;
