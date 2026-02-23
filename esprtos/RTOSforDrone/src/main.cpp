@@ -14,83 +14,175 @@ const String droneID    = "DRN_843nkr9p";
 
 WebSocketsClient webSocket;
 
+void blinkTwice() {
+    for (int i = 0; i < 2; i++) {
+        digitalWrite(2, HIGH);
+        delay(100);
+        digitalWrite(2, LOW);
+        delay(100);
+    }
+}
+
+void runFlightStage(int stageNum, String pathDesc) {
+    Serial.printf("\n>>> СТАРТ ЭТАПА №%d: %s\n", stageNum, pathDesc.c_str());
+    
+    // 1. СИГНАЛ ВЗЛЕТА (Два быстрых мигания)
+    blinkTwice(); 
+    
+    // 2. ПРОЦЕСС ПОЛЕТА (Горит постоянно)
+    digitalWrite(2, HIGH);
+    Serial.println("    [ПОЛЕТ...] Дрон перемещается по координатам");
+    
+    // Имитируем полет 3 секунды. 
+    // Используем цикл с webSocket.loop(), чтобы соединение не разорвалось
+    for (int i = 0; i < 30; i++) {
+        webSocket.loop(); 
+        delay(100); 
+    }
+    
+    // 3. СИГНАЛ ПОСАДКИ
+    digitalWrite(2, LOW);
+    Serial.println("    [ГОТОВО] Точка достигнута, фиксация.");
+    blinkTwice();
+    
+    delay(1000); // Пауза перед следующим взлетом
+}
+
+void sendFixToServer(const char* lanternId) {
+    if (webSocket.isConnected()) {
+        String msg = "{\"type\":1,\"target\":\"FixLantern\",\"arguments\":[\"" + String(lanternId) + "\"]}\x1e";
+        webSocket.sendTXT(msg);
+        Serial.printf("   [WS] Отчет об исправлении %s отправлен!\n", lanternId);
+    }
+}
+
+void sendMissionComplete() {
+    if (webSocket.isConnected()) {
+        String msg = "{\"type\":1,\"target\":\"CompleteMission\",\"arguments\":[]}\x1e";
+        webSocket.sendTXT(msg);
+        Serial.println("   [WS] Сигнал завершения миссии отправлен.");
+    }
+}
+
+
 void processMission(JsonVariant args) {
-    digitalWrite(2, HIGH);
-    delay(300);
-    digitalWrite(2, LOW);
-    delay(300);
-    digitalWrite(2, HIGH);
-    delay(300);
-    digitalWrite(2, LOW);
-    delay(300);
-
+    // В SignalR аргументы приходят в массиве. Наш список маршрутов - в args[0]
     JsonArray allVersions = args[0].as<JsonArray>();
-
+    
     if (allVersions.isNull() || allVersions.size() == 0) {
-        Serial.println("   [!] Ошибка: Список маршрутов пуст.");
+        Serial.println("   [!] Маршрут пуст.");
         return;
     }
 
-    Serial.printf("\n=== ПОЛУЧЕНО ВЕРСИЙ ПУТИ: %d ===\n", allVersions.size());
+    int totalStages = allVersions.size();
+    Serial.printf("\n=== ЗАПУСК МИССИИ: %d ЭТАПОВ ===\n", totalStages);
 
-    for (int i = 0; i < allVersions.size(); i++) {
+    for (int i = 0; i < totalStages; i++) {
         JsonArray currentRoute = allVersions[i].as<JsonArray>();
         
-        Serial.printf("\nЭТАП МАРШРУТА №%d [%d фонарей]\n", i + 1, currentRoute.size());
-
-        Serial.print(" ПУТЬ: ");
+        // 1. Формируем описание пути для консоли
+        String pathDesc = "";
         for (int j = 0; j < currentRoute.size(); j++) {
-            Serial.print(currentRoute[j]["id"].as<const char*>());
-            if (j < currentRoute.size() - 1) Serial.print(" -> ");
+            pathDesc += currentRoute[j]["id"].as<String>();
+            if (j < currentRoute.size() - 1) pathDesc += " -> ";
         }
-        Serial.println(" -> Конец этапа");
+        
+        Serial.printf("\nЭТАП №%d: %s\n", i + 1, pathDesc.c_str());
 
-        for (JsonObject lantern : currentRoute) {
-            const char* id = lantern["id"];
-            float lat = lantern["coordinates"]["lat"];
-            float lng = lantern["coordinates"]["lng"];
-            int status = lantern["status"];
+        // 2. Проходим по точкам этапа
+        for (int j = 0; j < currentRoute.size(); j++) {
+            JsonObject lantern = currentRoute[j];
+            const char* id = lantern["id"] | "??";
+            int status = lantern["status"] | 0;
 
-            Serial.printf("  • %s | %7.4f, %7.4f | Статус: %s\n", 
-                          id, lat, lng, 
-                          status == 1 ? "![СБОЙ]!" : "ОК");
+            Serial.printf(" -> Точка %s ", id);
+
+            if (status == 1) {
+                Serial.println("[СБОЙ] - Ремонтирую...");
+                // Имитация работы
+                for(int r = 0; r < 5; r++) {
+                    digitalWrite(2, HIGH); delay(200); 
+                    digitalWrite(2, LOW);  delay(200);
+                    webSocket.loop(); // Поддерживаем связь во время пауз
+                }
+                sendFixToServer(id);
+            } else {
+                Serial.println("[OK] - Пролет");
+                delay(500);
+            }
         }
-        Serial.println("------------------------------------------");
     }
+
+    Serial.println("\n=== МИССИЯ ЗАВЕРШЕНА ПОЛНОСТЬЮ ===");
+    sendMissionComplete(); // Освобождаем дрон на сервере
+}
+
+void flight(JsonVariant args) {
+    JsonArray allVersions = args[0].as<JsonArray>();
+    if (allVersions.isNull() || allVersions.size() == 0) return;
+
+    int totalStages = allVersions.size() + 1;
+    Serial.printf("\n=== ПОЛУЧЕНО ЗАДАНИЕ: %d ЭТАПОВ ===\n", totalStages);
+
+    for (int i = 0; i < totalStages; i++) {
+        JsonArray currentRoute = allVersions[i].as<JsonArray>();
+        
+        // Собираем описание пути для консоли (L1 -> L2...)
+        String pathDesc = "";
+        for (int j = 0; j < currentRoute.size(); j++) {
+            pathDesc += currentRoute[j]["id"].as<String>();
+            if (j < currentRoute.size() - 1) pathDesc += " -> ";
+
+            const char* id = currentRoute[j]["id"];
+            int status = currentRoute[j]["status"];
+
+            if (status == 1) {
+                Serial.printf("  [!] Фонарь %s СЛОМАН. Начинаю ремонт...\n", id);
+
+                // Визуальная индикация ремонта (например, быстрое мигание)
+                for(int r = 0; r < 5; r++) {
+                    digitalWrite(2, HIGH); 
+                    delay(500); 
+                    digitalWrite(2, LOW); 
+                    delay(500);
+                }
+
+                // ОТПРАВКА ДАННЫХ НА СЕРВЕР
+                sendFixToServer(id);
+
+                Serial.println("  [OK] Фонарь исправлен.");
+            }
+
+        }
+
+        // Запускаем симуляцию для этого этапа
+        runFlightStage(i + 1, pathDesc);
+    }
+
+    Serial.println("\n=== МИССИЯ ЗАВЕРШЕНА ПОЛНОСТЬЮ ===");
 }
 
 void handleIncomingMessage(char* json) {
     String input = String(json);
+    if (input.endsWith("\x1e")) input.remove(input.length() - 1);
 
-    if (input.endsWith("\x1e")) {
-        input.remove(input.length() - 1);
-    }
-
-    DynamicJsonDocument doc(4096); 
+    // Увеличили буфер для больших деревьев
+    DynamicJsonDocument doc(8192); 
     DeserializationError error = deserializeJson(doc, input);
-
-    if (error) {
-
-        return; 
-    }
+    
+    if (error) return; 
 
     const char* target = doc["target"]; 
     if (target == nullptr) return; 
 
-    Serial.printf("\n[SIGNALR] Команда: %s\n", target);
-
     if (strcmp(target, "RecieveMission") == 0) {
-
+        // Вызываем ОДНУ функцию, которая делает и полет, и ремонт
         processMission(doc["arguments"]);
     } 
     else if (strcmp(target, "EmergencyStop") == 0) {
-        Serial.println("-> !!! ЭКСТРЕННАЯ ОСТАНОВКА !!!");
+        Serial.println("!!! ЭКСТРЕННАЯ ОСТАНОВКА !!!");
         digitalWrite(2, LOW);
-    }
-    else if (strcmp(target, "SetLedStatus") == 0) {
-        bool state = doc["arguments"][0][0];
-        digitalWrite(2, state ? HIGH : LOW);
-        Serial.printf("-> LED: %s\n", state ? "ON" : "OFF");
+        // Здесь можно добавить сброс флага занятости, если нужно
     }
 }
 

@@ -9,6 +9,22 @@ namespace backend.Service
     {
         private readonly IAdmin _adminService;
 
+        public async Task FixLantern(string lanternId)
+        {
+            var lantern = _adminService.GetAllLanterns().FirstOrDefault(l => l.Id == lanternId);
+            if (lantern != null)
+            {
+                lantern.Status = 0;
+                Console.WriteLine($"[СИСТЕМА] Фонарь {lanternId} был исправлен.");
+            }
+        }
+
+        public async Task CompleteMission()
+        {
+            _adminService.isDroneBusy = false; // СБРАСЫВАЕМ ФЛАГ
+            Console.WriteLine("[СЕРВЕР] Дрон сообщил о завершении. Флаг IsDroneBusy сброшен в false.");
+        }
+
         public DroneHubService(IAdmin adminService)
         {
             _adminService = adminService;
@@ -21,9 +37,9 @@ namespace backend.Service
             if (!string.IsNullOrEmpty(droneId))
             {
                 _adminService.AddDrone("Drone_" + droneId);
-                
+
                 await Clients.All.SendAsync("ReceiveAction", $"Система: Дрон {droneId} подключен к сети.");
-                
+
                 Console.WriteLine($"[Hub] Подключено устройство: {droneId}");
             }
 
@@ -33,7 +49,7 @@ namespace backend.Service
         // public async Task SendTelemetry(string droneId, string data)
         // {
         //     await Clients.All.SendAsync("ReceiveTelemetry", droneId, data);
-            
+
         //     Console.WriteLine($"[Telemetry] От {droneId}: {data}");
         // }
 

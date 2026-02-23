@@ -45,6 +45,19 @@ public class AdminService : IAdmin
         }
     };
 
+    // public bool CheckStatus(string id)
+    // {
+    //     var status = _drones.FirstOrDefault(d => d.DroneID == id).DroneStatus;
+    //     return status;
+    // }
+
+    public bool isDroneBusy { get; set; } = false;
+
+    public List<LanternDTO> shareDB()
+    {
+        return _lanterns;
+    }
+
     private string GenLine()
     {
         var chars = "qwertyuioopasdfghjklzxcvbnm";
@@ -88,6 +101,7 @@ public class AdminService : IAdmin
         {
             lantern.Coordinates = NewData.Coordinates;
             lantern.LanternName = NewData.LanternName;
+            lantern.Id = NewData.Id;
             return lantern;
         }
         return null;
@@ -115,7 +129,9 @@ public class AdminService : IAdmin
         return drone;
     }
 
-    public List<LanternDTO> GetAllLanterns() => _lanterns;
+    public List<LanternDTO> GetAllLanterns() {
+        return _lanterns;
+    }
     public List<DroneDTO> GetAllDrones() { 
         Console.WriteLine("[СЕРВЕР] Вывод списка дронов: ");
         foreach (var drone in _drones)

@@ -13,6 +13,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHostedService<LanternMonitorService>();
 builder.Services.AddSingleton<IAdmin, AdminService>();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();

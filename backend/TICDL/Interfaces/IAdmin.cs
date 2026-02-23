@@ -11,4 +11,6 @@ public interface IAdmin
   LanternDTO EditLantern(string id, LanternDTO NewData);
   LanternDTO DeleteLantern(string Id);
   DroneDTO DeleteDrone(string Id);
+  List<LanternDTO> shareDB();
+  bool isDroneBusy { get; set; }
 }
